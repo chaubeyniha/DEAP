@@ -1,4 +1,3 @@
-# understand lambda, map, list, role of arrays
 from tqdm import tqdm
 import sys, os
 sys.path.insert(0, 'evoman')
@@ -10,23 +9,22 @@ from deap import base, creator, tools
 import json
 from datetime import datetime
 
-# Starting pop size = 100
+# starting pop size = 100
 pop_size = 100
 
-# Starting gen size = 20
+# starting gen size = 20
 gens = 20
 
-# Population increase value should stay at 1 IF and only IF you are testing EA 1
-# else set to 0
+# to test influence of population increase set to 1, otherwise 0
 pop_increase_value = 1
 
-# Enemy group 1
+# enemy group 1
 enemy_group1 = [2, 5, 7]
-# Enemy group 2
+# enemy group 2
 enemy_group2 = [3, 6, 7]
 
 
-# This should not be changed
+# this should not be changed
 n_hidden_neurons = 10
 
 # initializes simulation in individual evolution mode, for single static enemy.
@@ -45,7 +43,7 @@ n_weight = (env.get_num_sensors()+1)* n_hidden_neurons + (n_hidden_neurons+1)*5
 
 # create individual
 # inherit from Numpy allows individuals to use properties from Numpy
-# Since we want to maximize we use positive weight (single - objective)
+# since we want to maximize we use positive weight (single - objective)
 creator.create('FitnessMax', base.Fitness, weights = (1.0, 1.0))
 creator.create('Individual', np.ndarray, fitness = creator.FitnessMax)
 
@@ -56,7 +54,7 @@ toolbox.register('attribute_init', np.random.normal)
 # make a random number of individuals by calling toolbox.individual()
 toolbox.register("individual", tools.initRepeat, creator.Individual,
                  toolbox.attribute_init, n = n_weight)
-# Calling toolbox.population() will readily return a complete population in a lis
+# calling toolbox.population() will readily return a complete population in a lis
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 ind1 = toolbox.individual() # can print as base class representation (array)
@@ -73,8 +71,8 @@ def evaluate(x):
 
 toolbox.register("evaluate", evaluate)
 
-# if is_ea_1_currently_test:
 toolbox.register("mate", tools.cxTwoPoint)
+# if you wish to run another crossover
 # else:
 #     toolbox.register("mate", tools.cxOnePoint)
 
@@ -83,11 +81,12 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 
 def generation_loop(fitnesses, mate_prob, mut_prob, old_population, pop_increase_value=1):
-
-    # Set fitnesses to individuals
+   
+    # set fitnesses to individuals
     # assignment has to be list or tuple because because fitness values is are a list
     for ind, fit in zip(old_population, fitnesses):
         ind.fitness.values = [fit]
+   
     # select next generation of offspring
     offspring = toolbox.select(individuals=old_population, k=len(old_population)+pop_increase_value)
     # clone the selected individuals, independent instance
@@ -116,7 +115,7 @@ def generation_loop(fitnesses, mate_prob, mut_prob, old_population, pop_increase
     # The population is entirely replaced by the offspring
     old_population[:] = offspring
 
-    # Gather all the fitnesses in one list and print the stats
+    # gather all the fitnesses in one list and print the stats
     # fits = [ind.fitness.values[0] for ind in old_population]
 
     # best = pop[np.argmin([toolbox.evaluate(x) for ind in pop])]
@@ -161,17 +160,15 @@ def main():
     return avg_fitness_per_gen, max_fitness_per_gen, weight_delta_per_gen, best_individual
 
 
-# We need to do 4 big tests in total:
-# Two EAs for Two enemy groups consisting for 2-3 enemies.
-# Each person in team tests 1 EA for 1 enemy group. Does this 10 times.
-#
 avg_fit_all = {}
 max_fit_all = {}
 weight_delta_all = []
 avg_run_time = {}
 best_ind_all = None
-# 10 runs
-# tqdm is a visual thing
+
+## Run Tests
+
+# 10 runs, tqdm is a visual thing
 for i in tqdm(range(1, 11)):
     start = datetime.timestamp(datetime.now())
     avg_fit, max_fit, weight_delta, best_ind = main()
@@ -184,8 +181,6 @@ for i in tqdm(range(1, 11)):
         best_ind_all = best_ind
     elif best_ind_all[0] < best_ind[0]:
         best_ind_all = best_ind
-
-#EA_1_Run_Niha_67.8528528.txt
 
 with open('test/avg_fitness_all.json', 'w') as fp:
     json.dump(avg_fit_all, fp, indent=4)
@@ -201,12 +196,3 @@ with open('test/avg_run_time_all.json', 'w') as fp:
     json.dump(avg_run_time, fp, indent=4)
 
 np.savetxt(f'test/best_individual_{best_ind_all[0]}.txt', best_ind_all[1])
-
-# print("  Max %s" % max(fits))
-# print("  Avg %s" % mean) --> mean = sum(fits) / length
-
-# iterate main several times (20)
-# create a 2 dimensional list in excel, repeat main and then append to the list so you can compare populations
-# first time = randomly generated population, then use the population best one is selected in next population,
-# worst 3 deleted and then next population baseed on this
-# end iteration = generation is reached (20) or when avg fitness of the population
